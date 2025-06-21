@@ -1,49 +1,23 @@
 const Profile = require("../models/Profile");
 const { cloudinary } = require("../config/cloudinary");
 
-// exports.createProfile = async (req, res) => {
-//   try {
-//     // Validate required fields
-//     if (!req.body.firstName || !req.body.lastName || !req.body.email) {
-//       return res.status(400).json({
-//         status: "fail",
-//         message: "First name, last name, and email are required",
-//       });
-//     }
-
-//     if (!req.file) {
-//       return res.status(400).json({
-//         status: "fail",
-//         message: "Passport photo is required",
-//       });
-//     }
-
-//     const profileData = {
-//       firstName: req.body.firstName,
-//       lastName: req.body.lastName,
-//       email: req.body.email,
-//       bio: req.body.bio || null,
-//       dateOfBirth: req.body.dateOfBirth || null,
-//       passportPhoto: req.file.path,
-//       // status defaults to 'pending'
-//     };
-
-//     const newProfile = await Profile.create(profileData);
-
-//     return res.status(201).json({
-//       status: "success",
-//       data: { profile: newProfile },
-//     });
-//   } catch (error) {
-//     // Handle errors
-//   }
-// };
-
 exports.approveProfile = async (req, res) => {
   try {
+    const { zones } = req.body;
+    
+    if (!zones || !Array.isArray(zones)) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Zones array is required for approval",
+      });
+    }
+
     const profile = await Profile.findByIdAndUpdate(
       req.params.id,
-      { status: 'approved' },
+      { 
+        status: 'approved',
+        zones: zones 
+      },
       { new: true }
     );
 
@@ -59,7 +33,11 @@ exports.approveProfile = async (req, res) => {
       data: { profile },
     });
   } catch (error) {
-    // Handle errors
+    console.error("Approve profile error:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "An unexpected error occurred while approving profile",
+    });
   }
 };
 
@@ -91,10 +69,10 @@ exports.rejectProfile = async (req, res) => {
 exports.uploadProfile = async (req, res) => {
   try {
     // Validate required fields
-    if (!req.body.firstName || !req.body.lastName) {
+    if (!req.body.firstName || !req.body.lastName || !req.body.category || !req.body.organization) {
       return res.status(400).json({
         status: "fail",
-        message: "First name and last name are required",
+        message: "First name, last name, category, and organization are required",
       });
     }
 
@@ -108,14 +86,17 @@ exports.uploadProfile = async (req, res) => {
     const profileData = {
       firstName: req.body.firstName,
       lastName: req.body.lastName,
+      nationality: req.body.nationality,
       email: req.body.email,
-      // phone: req.body.phone,
-      bio: req.body.bio || null,
-      dateOfBirth: req.body.dateOfBirth || null,
+      phoneNumber: req.body.phoneNumber,
+      emergencyContactName: req.body.emergencyContactName,
+      emergencyContactPhone: req.body.emergencyContactPhone,
+      category: req.body.category,
+      organization: req.body.organization,
+      title: req.body.title,
       passportPhoto: req.file.path,
     };
 
-    // Create new profile (no user association)
     const newProfile = await Profile.create(profileData);
 
     return res.status(201).json({
@@ -139,6 +120,7 @@ exports.uploadProfile = async (req, res) => {
     });
   }
 };
+
 
 // Get all profiles
 exports.getAllProfiles = async (req, res) => {
