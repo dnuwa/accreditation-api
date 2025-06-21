@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const profileSchema = new mongoose.Schema({
   firstName: {
@@ -9,27 +9,45 @@ const profileSchema = new mongoose.Schema({
     type: String,
     required: [true, "Please provide your last name"],
   },
+  nationality: {
+    type: String,
+  },
   email: {
     type: String,
-    required: [true, "Please provide your email"],
-    unique: true,
     lowercase: true,
   },
-  bio: {
+  phoneNumber: {
     type: String,
-    maxlength: [500, "Bio cannot be more than 500 characters"],
+  },
+  emergencyContactName: {
+    type: String,
+  },
+  emergencyContactPhone: {
+    type: String,
+  },
+  category: {
+    type: String,
+    required: [true, "Please provide your category"],
+  },
+  organization: {
+    type: String,
+    required: [true, "Please provide your organization"],
+  },
+  title: {
+    type: String,
   },
   passportPhoto: {
     type: String,
-    required: true,
-  },
-  dateOfBirth: {
-    type: Date,
+    required: [true, "Please provide your passport photo"],
   },
   status: {
     type: String,
     enum: ["pending", "approved", "rejected"],
     default: "pending",
+  },
+  zones: {
+    type: [String],
+    default: [],
   },
   createdAt: {
     type: Date,
@@ -39,4 +57,4 @@ const profileSchema = new mongoose.Schema({
 
 const Profile = mongoose.model("Profile", profileSchema);
 
-module.exports = Profile; // This was the missing line
+module.exports = Profile;
