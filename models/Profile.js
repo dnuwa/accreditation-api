@@ -5,6 +5,9 @@ const profileSchema = new mongoose.Schema({
     type: String,
     required: [true, "Please provide your first name"],
   },
+  middleName: {
+    type: String,
+  },
   lastName: {
     type: String,
     required: [true, "Please provide your last name"],
@@ -28,6 +31,9 @@ const profileSchema = new mongoose.Schema({
   category: {
     type: String,
     required: [true, "Please provide your category"],
+  },
+  subcategory: {
+    type: String,
   },
   organization: {
     type: String,

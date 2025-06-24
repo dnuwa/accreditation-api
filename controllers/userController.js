@@ -4,7 +4,7 @@ const { cloudinary } = require("../config/cloudinary");
 exports.approveProfile = async (req, res) => {
   try {
     const { zones } = req.body;
-    
+
     if (!zones || !Array.isArray(zones)) {
       return res.status(400).json({
         status: "fail",
@@ -14,9 +14,9 @@ exports.approveProfile = async (req, res) => {
 
     const profile = await Profile.findByIdAndUpdate(
       req.params.id,
-      { 
-        status: 'approved',
-        zones: zones 
+      {
+        status: "approved",
+        zones: zones,
       },
       { new: true }
     );
@@ -45,7 +45,7 @@ exports.rejectProfile = async (req, res) => {
   try {
     const profile = await Profile.findByIdAndUpdate(
       req.params.id,
-      { status: 'rejected' },
+      { status: "rejected" },
       { new: true }
     );
 
@@ -69,10 +69,16 @@ exports.rejectProfile = async (req, res) => {
 exports.uploadProfile = async (req, res) => {
   try {
     // Validate required fields
-    if (!req.body.firstName || !req.body.lastName || !req.body.category || !req.body.organization) {
+    if (
+      !req.body.firstName ||
+      !req.body.lastName ||
+      !req.body.category ||
+      !req.body.organization
+    ) {
       return res.status(400).json({
         status: "fail",
-        message: "First name, last name, category, and organization are required",
+        message:
+          "First name, last name, category, and organization are required",
       });
     }
 
@@ -85,6 +91,7 @@ exports.uploadProfile = async (req, res) => {
 
     const profileData = {
       firstName: req.body.firstName,
+      middleName: req.body.middleName, // Add middle name
       lastName: req.body.lastName,
       nationality: req.body.nationality,
       email: req.body.email,
@@ -92,6 +99,7 @@ exports.uploadProfile = async (req, res) => {
       emergencyContactName: req.body.emergencyContactName,
       emergencyContactPhone: req.body.emergencyContactPhone,
       category: req.body.category,
+      subcategory: req.body.subcategory, // Add subcategory
       organization: req.body.organization,
       title: req.body.title,
       passportPhoto: req.file.path,
@@ -120,7 +128,6 @@ exports.uploadProfile = async (req, res) => {
     });
   }
 };
-
 
 // Get all profiles
 exports.getAllProfiles = async (req, res) => {
@@ -169,9 +176,45 @@ exports.getProfileById = async (req, res) => {
 // Update profile
 exports.updateProfile = async (req, res) => {
   try {
+    // Extract fields from request body
+    const {
+      firstName,
+      middleName,
+      lastName,
+      nationality,
+      email,
+      phoneNumber,
+      emergencyContactName,
+      emergencyContactPhone,
+      category,
+      subcategory,
+      organization,
+      title,
+    } = req.body;
+
+    const updateData = {
+      firstName,
+      middleName, // Include middle name
+      lastName,
+      nationality,
+      email,
+      phoneNumber,
+      emergencyContactName,
+      emergencyContactPhone,
+      category,
+      subcategory, // Include subcategory
+      organization,
+      title,
+    };
+
+    // Handle passport photo update if a new file is provided
+    if (req.file) {
+      updateData.passportPhoto = req.file.path;
+    }
+
     const updatedProfile = await Profile.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     );
 
