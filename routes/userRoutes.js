@@ -22,17 +22,11 @@ router.patch(
 );
 
 // Protected routes
-router.get(
-  "/profiles",
-  protect,
-  restrictTo("admin"),
-  profileController.getAllProfiles
-);
+router.get("/profiles", protect, profileController.getAllProfiles);
 router.get("/profiles/:id", protect, profileController.getProfileById);
 router.patch(
   "/profiles/:id",
-  protect,
-  restrictTo("admin"), // Only admin can update profiles
+  protect, // Only admin can update profiles
   profileController.updateProfile
 );
 router.delete(
