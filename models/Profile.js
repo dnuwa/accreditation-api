@@ -37,7 +37,6 @@ const profileSchema = new mongoose.Schema({
   },
   organization: {
     type: String,
-    required: [true, "Please provide your organization"],
   },
   title: {
     type: String,
