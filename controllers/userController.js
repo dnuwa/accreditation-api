@@ -72,13 +72,12 @@ exports.uploadProfile = async (req, res) => {
     if (
       !req.body.firstName ||
       !req.body.lastName ||
-      !req.body.category ||
-      !req.body.organization
+      !req.body.category
     ) {
       return res.status(400).json({
         status: "fail",
         message:
-          "First name, last name, category, and organization are required",
+          "First name, last name and category are required",
       });
     }
 
