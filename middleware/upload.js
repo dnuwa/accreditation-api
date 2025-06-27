@@ -5,7 +5,7 @@ const AppError = require("../utils/errorHandler");
 const multerUpload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB
+    fileSize: 10 * 1024 * 1024, // 10MB
     files: 1,
   },
   fileFilter: (req, file, cb) => {
@@ -25,7 +25,7 @@ const handleSingleUpload = (fieldName) => {
           if (err.code === "LIMIT_FILE_SIZE") {
             return res.status(413).json({
               status: "fail",
-              message: "File too large (max 5MB)",
+              message: "File too large (max 9MB)",
             });
           }
           return res.status(400).json({
