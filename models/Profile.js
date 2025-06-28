@@ -18,6 +18,12 @@ const profileSchema = new mongoose.Schema({
   email: {
     type: String,
     lowercase: true,
+    required: [true, "Please provide your email"],
+    unique: true,
+    default: function() {
+      // Generate a default email if none provided
+      return `${this.firstName.toLowerCase()}${this.lastName.toLowerCase()}${Date.now()}@rugbyafricacup2025.com`;
+    }
   },
   phoneNumber: {
     type: String,
