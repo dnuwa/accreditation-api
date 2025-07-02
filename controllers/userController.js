@@ -136,20 +136,57 @@ exports.uploadProfile = async (req, res) => {
 };
 
 // Get all profiles
-exports.getAllProfiles = async (req, res) => {
+exports.getProfiles = async (req, res) => {
   try {
-    const profiles = await Profile.find().select("-__v");
+    // Parse pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Build the base filter
+    const filter = {};
+
+    // Handle status filter - override any default filtering
+    if (req.query.status) {
+      const statuses = req.query.status.split(",");
+      filter.status = statuses.length === 1 ? statuses[0] : { $in: statuses };
+    }
+
+    // Debug: Log the actual filter being sent to MongoDB
+    // console.log("Final MongoDB query filter:", JSON.stringify(filter, null, 2));
+
+    // Execute the query
+    const [profiles, total] = await Promise.all([
+      Profile.find(filter)
+        .select("-__v")
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 }),
+      Profile.countDocuments(filter),
+    ]);
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(total / limit);
 
     return res.status(200).json({
       status: "success",
       results: profiles.length,
       data: { profiles },
+      pagination: {
+        total,
+        totalPages,
+        currentPage: page,
+        nextPage: page < totalPages ? page + 1 : null,
+        prevPage: page > 1 ? page - 1 : null,
+        limit,
+      },
     });
   } catch (error) {
     console.error("Get profiles error:", error);
     return res.status(500).json({
       status: "error",
       message: "Failed to retrieve profiles",
+      error: error.message,
     });
   }
 };

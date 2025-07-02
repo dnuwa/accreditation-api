@@ -22,7 +22,7 @@ router.patch(
 );
 
 // Protected routes
-router.get("/profiles", protect, profileController.getAllProfiles);
+router.get("/profiles", protect, profileController.getProfiles);
 router.get("/profiles/:id", protect, profileController.getProfileById);
 router.patch(
   "/profiles/:id",
