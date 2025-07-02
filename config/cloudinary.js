@@ -1,6 +1,6 @@
-require('dotenv').config();
+require("dotenv").config();
 const cloudinary = require("cloudinary").v2;
-const { CloudinaryStorage } = require("multer-storage-cloudinary"); 
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
 // Validate configuration
 if (
@@ -10,7 +10,6 @@ if (
 ) {
   throw new Error("Missing Cloudinary configuration in environment variables");
 }
-
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -24,7 +23,10 @@ const storage = new CloudinaryStorage({
   params: {
     folder: "passport-photos",
     allowed_formats: ["jpg", "jpeg", "png"],
-    transformation: [{ width: 200, height: 200, crop: "fill" }],
+    transformation: [
+      { width: 200, height: 200, crop: "fill", gravity: "face" },
+      { width: 200, height: 200, crop: "scale" },
+    ],
   },
 });
 
