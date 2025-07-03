@@ -26,6 +26,7 @@ router.get("/profiles", protect, profileController.getProfiles);
 router.get("/profiles/:id", protect, profileController.getProfileById);
 router.patch(
   "/profiles/:id",
+  single,
   protect, // Only admin can update profiles
   profileController.updateProfile
 );
