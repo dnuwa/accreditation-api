@@ -237,29 +237,80 @@ exports.getProfileById = async (req, res) => {
 // Update profile
 exports.updateProfile = async (req, res) => {
   try {
-    // Generate email if not provided
-    const email =
-      req.body.email ||
-      `${req.body.firstName.toLowerCase()}${req.body.lastName.toLowerCase()}${Date.now()}@rugbyafricacup2025.com`;
+    const profileId = req.params.id;
 
+    // Check if profile exists
+    const existingProfile = await Profile.findById(profileId);
+    if (!existingProfile) {
+      return res.status(404).json({
+        status: "fail",
+        message: "No profile found with that ID",
+      });
+    }
+
+    // Prepare update data
     const updateData = {
-      firstName: req.body.firstName,
-      middleName: req.body.middleName,
-      lastName: req.body.lastName,
-      nationality: req.body.nationality,
-      email: email, // Use provided email or generated one
-      phoneNumber: req.body.phoneNumber,
-      emergencyContactName: req.body.emergencyContactName,
-      emergencyContactPhone: req.body.emergencyContactPhone,
-      category: req.body.category,
-      subcategory: req.body.subcategory,
-      organization: req.body.organization,
-      title: req.body.title,
+      firstName: req.body.firstName || existingProfile.firstName,
+      middleName: req.body.middleName || existingProfile.middleName,
+      lastName: req.body.lastName || existingProfile.lastName,
+      nationality: req.body.nationality || existingProfile.nationality,
+      phoneNumber: req.body.phoneNumber || existingProfile.phoneNumber,
+      emergencyContactName:
+        req.body.emergencyContactName || existingProfile.emergencyContactName,
+      emergencyContactPhone:
+        req.body.emergencyContactPhone || existingProfile.emergencyContactPhone,
+      category: req.body.category || existingProfile.category,
+      subcategory: req.body.subcategory || existingProfile.subcategory,
+      organization: req.body.organization || existingProfile.organization,
+      title: req.body.title || existingProfile.title,
+      // Only update passport photo if a new file is uploaded
+      passportPhoto: req.file ? req.file.path : existingProfile.passportPhoto,
     };
 
-    // ... rest of the updateProfile function remains the same ...
+    // Validate required fields if they're being updated
+    if (
+      req.body.firstName === "" ||
+      req.body.lastName === "" ||
+      req.body.category === ""
+    ) {
+      return res.status(400).json({
+        status: "fail",
+        message: "First name, last name and category cannot be empty",
+      });
+    }
+
+    const updatedProfile = await Profile.findByIdAndUpdate(
+      profileId,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    return res.status(200).json({
+      status: "success",
+      data: { profile: updatedProfile },
+    });
   } catch (error) {
-    // ... error handling remains the same ...
+    console.error("Update profile error:", error);
+
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((err) => err.message);
+      return res.status(400).json({
+        status: "fail",
+        message: messages.join(", "),
+      });
+    }
+
+    if (error.code === 11000) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Email already exists. Please use a different email.",
+      });
+    }
+
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to update profile",
+    });
   }
 };
 
