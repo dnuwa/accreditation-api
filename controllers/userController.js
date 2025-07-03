@@ -146,14 +146,32 @@ exports.getProfiles = async (req, res) => {
     // Build the base filter
     const filter = {};
 
-    // Handle status filter - override any default filtering
+    // 1. Handle status filter
     if (req.query.status) {
       const statuses = req.query.status.split(",");
       filter.status = statuses.length === 1 ? statuses[0] : { $in: statuses };
     }
 
-    // Debug: Log the actual filter being sent to MongoDB
-    // console.log("Final MongoDB query filter:", JSON.stringify(filter, null, 2));
+    // 2. Handle search query (new functionality)
+    if (req.query.search) {
+      const searchRegex = new RegExp(req.query.search, "i"); // Case-insensitive
+      filter.$or = [
+        { firstName: searchRegex },
+        { lastName: searchRegex },
+        { email: searchRegex },
+        { organization: searchRegex },
+        { phoneNumber: searchRegex },
+        { emergencyContactName: searchRegex },
+      ];
+    }
+
+    // 3. Additional filters (example for category)
+    if (req.query.category) {
+      filter.category = req.query.category;
+    }
+
+    // Debug: Log the actual filter
+    // console.log("MongoDB Query Filter:", JSON.stringify(filter, null, 2));
 
     // Execute the query
     const [profiles, total] = await Promise.all([
