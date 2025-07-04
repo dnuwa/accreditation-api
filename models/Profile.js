@@ -113,7 +113,7 @@ const profileSchema = new mongoose.Schema(
 // Compound indexes for common query patterns
 profileSchema.index({ status: 1, category: 1 });
 profileSchema.index({ lastName: 1, firstName: 1 });
-profileSchema.index({ email: 1 }, { unique: true });
+// profileSchema.index({ email: 1 }, { unique: true });
 
 // Virtual for full name
 profileSchema.virtual("fullName").get(function () {
