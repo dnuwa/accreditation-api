@@ -152,9 +152,19 @@ exports.getProfiles = async (req, res) => {
       filter.status = statuses.length === 1 ? statuses[0] : { $in: statuses };
     }
 
-    // 2. Handle search query (new functionality)
+    // 2. Handle category filter (frontend sends as category_name)
+    if (req.query.category_name) {
+      filter.category = req.query.category_name;
+    }
+
+    // 3. Handle subcategory filter (frontend sends as subcategory_name)
+    if (req.query.subcategory_name) {
+      filter.subcategory = req.query.subcategory_name;
+    }
+
+    // 4. Handle search query
     if (req.query.search) {
-      const searchRegex = new RegExp(req.query.search, "i"); // Case-insensitive
+      const searchRegex = new RegExp(req.query.search, "i");
       filter.$or = [
         { firstName: searchRegex },
         { lastName: searchRegex },
@@ -165,13 +175,17 @@ exports.getProfiles = async (req, res) => {
       ];
     }
 
-    // 3. Additional filters (example for category)
-    if (req.query.category) {
-      filter.category = req.query.category;
+    // 5. Handle sorting - only allow category and subcategory
+    let sortOption = { createdAt: -1 }; // Default sort
+    if (req.query.sortBy) {
+      const allowedSortFields = ['category', 'subcategory'];
+      const requestedField = req.query.sortBy.trim();
+      
+      if (allowedSortFields.includes(requestedField)) {
+        const sortOrder = req.query.sortOrder === 'asc' ? 1 : -1;
+        sortOption = { [requestedField]: sortOrder };
+      }
     }
-
-    // Debug: Log the actual filter
-    // console.log("MongoDB Query Filter:", JSON.stringify(filter, null, 2));
 
     // Execute the query
     const [profiles, total] = await Promise.all([
@@ -179,7 +193,7 @@ exports.getProfiles = async (req, res) => {
         .select("-__v")
         .skip(skip)
         .limit(limit)
-        .sort({ createdAt: -1 }),
+        .sort(sortOption),
       Profile.countDocuments(filter),
     ]);
 
@@ -198,6 +212,10 @@ exports.getProfiles = async (req, res) => {
         prevPage: page > 1 ? page - 1 : null,
         limit,
       },
+      filters: {
+        ...(req.query.category_name && { category: req.query.category_name }),
+        ...(req.query.subcategory_name && { subcategory: req.query.subcategory_name })
+      }
     });
   } catch (error) {
     console.error("Get profiles error:", error);
