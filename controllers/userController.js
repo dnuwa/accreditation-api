@@ -162,7 +162,18 @@ exports.getProfiles = async (req, res) => {
       filter.subcategory = req.query.subcategory_name;
     }
 
-    // 4. Handle search query
+    // 4. Handle date filtering
+    if (req.query.startDate || req.query.endDate) {
+      filter.createdAt = {};
+      if (req.query.startDate) {
+        filter.createdAt.$gte = new Date(req.query.startDate);
+      }
+      if (req.query.endDate) {
+        filter.createdAt.$lte = new Date(req.query.endDate);
+      }
+    }
+
+    // 5. Handle search query
     if (req.query.search) {
       const searchRegex = new RegExp(req.query.search, "i");
       filter.$or = [
@@ -175,15 +186,15 @@ exports.getProfiles = async (req, res) => {
       ];
     }
 
-    // 5. Handle sorting - only allow category and subcategory
-    let sortOption = { createdAt: -1 }; // Default sort
+    // 6. Handle sorting - default is newest first, allow category/subcategory sorting
+    let sortOption = { createdAt: -1 }; // Default sort (newest first)
     if (req.query.sortBy) {
       const allowedSortFields = ['category', 'subcategory'];
       const requestedField = req.query.sortBy.trim();
       
       if (allowedSortFields.includes(requestedField)) {
         const sortOrder = req.query.sortOrder === 'asc' ? 1 : -1;
-        sortOption = { [requestedField]: sortOrder };
+        sortOption = { [requestedField]: sortOrder, createdAt: -1 }; // Secondary sort by createdAt
       }
     }
 
@@ -214,7 +225,9 @@ exports.getProfiles = async (req, res) => {
       },
       filters: {
         ...(req.query.category_name && { category: req.query.category_name }),
-        ...(req.query.subcategory_name && { subcategory: req.query.subcategory_name })
+        ...(req.query.subcategory_name && { subcategory: req.query.subcategory_name }),
+        ...(req.query.startDate && { startDate: req.query.startDate }),
+        ...(req.query.endDate && { endDate: req.query.endDate })
       }
     });
   } catch (error) {
