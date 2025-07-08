@@ -189,11 +189,11 @@ exports.getProfiles = async (req, res) => {
     // 6. Handle sorting - default is newest first, allow category/subcategory sorting
     let sortOption = { createdAt: -1 }; // Default sort (newest first)
     if (req.query.sortBy) {
-      const allowedSortFields = ['category', 'subcategory'];
+      const allowedSortFields = ["category", "subcategory"];
       const requestedField = req.query.sortBy.trim();
-      
+
       if (allowedSortFields.includes(requestedField)) {
-        const sortOrder = req.query.sortOrder === 'asc' ? 1 : -1;
+        const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
         sortOption = { [requestedField]: sortOrder, createdAt: -1 }; // Secondary sort by createdAt
       }
     }
@@ -225,10 +225,12 @@ exports.getProfiles = async (req, res) => {
       },
       filters: {
         ...(req.query.category_name && { category: req.query.category_name }),
-        ...(req.query.subcategory_name && { subcategory: req.query.subcategory_name }),
+        ...(req.query.subcategory_name && {
+          subcategory: req.query.subcategory_name,
+        }),
         ...(req.query.startDate && { startDate: req.query.startDate }),
-        ...(req.query.endDate && { endDate: req.query.endDate })
-      }
+        ...(req.query.endDate && { endDate: req.query.endDate }),
+      },
     });
   } catch (error) {
     console.error("Get profiles error:", error);
@@ -294,6 +296,9 @@ exports.updateProfile = async (req, res) => {
       subcategory: req.body.subcategory || existingProfile.subcategory,
       organization: req.body.organization || existingProfile.organization,
       title: req.body.title || existingProfile.title,
+      // Handle zones array - use provided array or keep existing
+      zones:
+        req.body.zones !== undefined ? req.body.zones : existingProfile.zones,
       // Only update passport photo if a new file is uploaded
       passportPhoto: req.file ? req.file.path : existingProfile.passportPhoto,
     };
@@ -307,6 +312,14 @@ exports.updateProfile = async (req, res) => {
       return res.status(400).json({
         status: "fail",
         message: "First name, last name and category cannot be empty",
+      });
+    }
+
+    // Validate zones is an array if provided
+    if (req.body.zones !== undefined && !Array.isArray(req.body.zones)) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Zones must be an array",
       });
     }
 
