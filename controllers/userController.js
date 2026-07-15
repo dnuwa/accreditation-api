@@ -18,7 +18,7 @@ exports.approveProfile = async (req, res) => {
         status: "approved",
         zones: zones,
       },
-      { new: true }
+      { new: true },
     );
 
     if (!profile) {
@@ -46,7 +46,7 @@ exports.rejectProfile = async (req, res) => {
     const profile = await Profile.findByIdAndUpdate(
       req.params.id,
       { status: "rejected" },
-      { new: true }
+      { new: true },
     );
 
     if (!profile) {
@@ -136,6 +136,7 @@ exports.uploadProfile = async (req, res) => {
 };
 
 // Get all profiles
+// Get all profiles
 exports.getProfiles = async (req, res) => {
   try {
     // Parse pagination parameters
@@ -152,12 +153,12 @@ exports.getProfiles = async (req, res) => {
       filter.status = statuses.length === 1 ? statuses[0] : { $in: statuses };
     }
 
-    // 2. Handle category filter (frontend sends as category_name)
+    // 2. Handle category filter
     if (req.query.category_name) {
       filter.category = req.query.category_name;
     }
 
-    // 3. Handle subcategory filter (frontend sends as subcategory_name)
+    // 3. Handle subcategory filter
     if (req.query.subcategory_name) {
       filter.subcategory = req.query.subcategory_name;
     }
@@ -165,9 +166,11 @@ exports.getProfiles = async (req, res) => {
     // 4. Handle date filtering
     if (req.query.startDate || req.query.endDate) {
       filter.createdAt = {};
+
       if (req.query.startDate) {
         filter.createdAt.$gte = new Date(req.query.startDate);
       }
+
       if (req.query.endDate) {
         filter.createdAt.$lte = new Date(req.query.endDate);
       }
@@ -175,7 +178,9 @@ exports.getProfiles = async (req, res) => {
 
     // 5. Handle search query
     if (req.query.search) {
-      const searchRegex = new RegExp(req.query.search, "i");
+      const search = req.query.search.trim();
+      const searchRegex = new RegExp(search, "i");
+
       filter.$or = [
         { firstName: searchRegex },
         { lastName: searchRegex },
@@ -183,38 +188,59 @@ exports.getProfiles = async (req, res) => {
         { organization: searchRegex },
         { phoneNumber: searchRegex },
         { emergencyContactName: searchRegex },
+
+        // Search by full name (e.g. "Hezbon Ndubi")
+        {
+          $expr: {
+            $regexMatch: {
+              input: {
+                $concat: ["$firstName", " ", "$lastName"],
+              },
+              regex: search,
+              options: "i",
+            },
+          },
+        },
       ];
     }
 
-    // 6. Handle sorting - default is newest first, allow category/subcategory sorting
-    let sortOption = { createdAt: -1 }; // Default sort (newest first)
+    // 6. Handle sorting
+    let sortOption = { createdAt: -1 };
+
     if (req.query.sortBy) {
       const allowedSortFields = ["category", "subcategory"];
       const requestedField = req.query.sortBy.trim();
 
       if (allowedSortFields.includes(requestedField)) {
         const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
-        sortOption = { [requestedField]: sortOrder, createdAt: -1 }; // Secondary sort by createdAt
+
+        sortOption = {
+          [requestedField]: sortOrder,
+          createdAt: -1,
+        };
       }
     }
 
-    // Execute the query
+    // Execute queries
     const [profiles, total] = await Promise.all([
       Profile.find(filter)
         .select("-__v")
+        .sort(sortOption)
         .skip(skip)
-        .limit(limit)
-        .sort(sortOption),
+        .limit(limit),
+
       Profile.countDocuments(filter),
     ]);
 
-    // Calculate pagination metadata
+    // Pagination metadata
     const totalPages = Math.ceil(total / limit);
 
     return res.status(200).json({
       status: "success",
       results: profiles.length,
-      data: { profiles },
+      data: {
+        profiles,
+      },
       pagination: {
         total,
         totalPages,
@@ -224,16 +250,23 @@ exports.getProfiles = async (req, res) => {
         limit,
       },
       filters: {
-        ...(req.query.category_name && { category: req.query.category_name }),
+        ...(req.query.category_name && {
+          category: req.query.category_name,
+        }),
         ...(req.query.subcategory_name && {
           subcategory: req.query.subcategory_name,
         }),
-        ...(req.query.startDate && { startDate: req.query.startDate }),
-        ...(req.query.endDate && { endDate: req.query.endDate }),
+        ...(req.query.startDate && {
+          startDate: req.query.startDate,
+        }),
+        ...(req.query.endDate && {
+          endDate: req.query.endDate,
+        }),
       },
     });
   } catch (error) {
     console.error("Get profiles error:", error);
+
     return res.status(500).json({
       status: "error",
       message: "Failed to retrieve profiles",
@@ -326,7 +359,7 @@ exports.updateProfile = async (req, res) => {
     const updatedProfile = await Profile.findByIdAndUpdate(
       profileId,
       updateData,
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     return res.status(200).json({
